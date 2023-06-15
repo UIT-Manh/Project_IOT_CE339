@@ -2,6 +2,9 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+ 
+}
+#bg{
   background-color: #f4f4f4;
 }
 .taskbar {
@@ -9,7 +12,7 @@ body {
   color: #fff;
   display: flex;
   align-items: center;
-  height: 70px;
+  height: 60px;
   padding: 0 20px;
 }
 
@@ -42,13 +45,39 @@ body {
 
 .chart-container {
   width: calc(45% - 50px);
-  height: 210px;
+  height: 200px;
   background-color: #ffffff;
   border-radius: 5px;
   margin-left: 80px;
   margin-bottom: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+}
+
+.button-container {
+  width: calc(45% - 50px);
+  height: 200px;
+  background-color: #f4f4f4;
+  margin-left: 80px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+#status
+{
+  margin-left: 40px;
+  font-size:larger;
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
+
+#status-btn {
+  width: 300px;
+  height: 150px;
+  align-self: center;
+  margin-left: 150px;
+}
+#status-btn
+{
+  font-size:x-large;
 }
 
 canvas {
@@ -64,8 +93,8 @@ canvas {
 .image-container {
   display: flex;
   justify-content: center;
-  margin-top: 30px;
-  margin-bottom: 50px;
+  margin-top: 15px;
+  margin-bottom: 15Px;
 }
 
 .image-container img {  

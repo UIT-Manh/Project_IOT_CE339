@@ -9,20 +9,23 @@ module.exports = function (io, mqtt) {
             try
             { 
                 environment.find().sort({ timestamp: -1 })
-                                .limit(30)
-                                .exec(function(err, documents) 
-                                {
-                                    // console.info(documents);
-                                    io.sockets.emit('Send-data',documents)
-                                    if (err) {
-                                        console.error('Get data error :', err);
-                                      }
-                                })
+                    .limit(30)
+                    .exec(function(err, documents) 
+                    {
+                        // console.info(documents);
+                        io.sockets.emit('Send-data',documents)
+                        if (err) {
+                            console.error('Get data error :', err);
+                        }
+                    })
                 console.log("Get data environment successfully!")
             }
             catch (err) {
                 console.log("Get data error :" + {err})
             }
+        })
+        socket.on("Buzzer",()=>{
+            mqtt.sendBuzzerSignal();
         })
     })
 }

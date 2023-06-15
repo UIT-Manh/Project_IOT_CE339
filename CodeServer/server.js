@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
 // Import evironment variables
 const config = require('./config/config');
 // URI of mongo DB
-const URI = 'mongodb+srv://1111:1234@golfcart.nr6xmoy.mongodb.net/GOLF_CART?retryWrites=true&w=majority'
+// const URI = 'mongodb+srv://1111:1234@golfcart.nr6xmoy.mongodb.net/GOLF_CART?retryWrites=true&w=majority'
+const URI = 'mongodb+srv://1111:1234@cluster0.lxqs9wg.mongodb.net/IOT_PROJECT?retryWrites=true&w=majority'
 // Using ejs as a tool simulate HTML
 appExpress.set("view engine", "ejs");
 // Add router for ejs

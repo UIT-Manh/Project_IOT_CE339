@@ -7,6 +7,9 @@ const environment = new Schema ({
     hum:{
         type:Number
     },
+    smoke:{
+        type:Number
+    },
     time:{
         type:String
     },

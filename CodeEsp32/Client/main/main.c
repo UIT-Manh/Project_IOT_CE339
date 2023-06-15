@@ -115,6 +115,8 @@ void sensor_reader_task(void *pvParameters)
                 int err = send(sock, data, strlen(data), 0);
                 if (err < 0) {
                     ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                    if (errno == 128)
+                    esp_restart();
                 }
             }
             gpio_set_level(LED_PIN, 1);
@@ -139,17 +141,21 @@ void test_sensor_reader_task(void *pvParameters)
             cJSON_AddStringToObject(root, "topic", "temp-hum");
             cJSON_AddNumberToObject(root, "temperature", rand() % 100 + 1);
             cJSON_AddNumberToObject(root, "humidity", rand() % 100 + 1);
+            // cJSON_AddNumberToObject(root, "smoke", rand() % 100 + 1);
             char *data = cJSON_Print(root);
             /* send data via socket */
             int err = send(sock, data, strlen(data), 0);
+            ESP_LOGW(TAG, "Sent data!");
             if (err < 0) 
             {
                 ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                if (errno == 128)
+                esp_restart();
             }
             gpio_set_level(LED_PIN, 1);
-            vTaskDelay(300 / portTICK_PERIOD_MS);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             gpio_set_level(LED_PIN, 0);
-            vTaskDelay(700 / portTICK_PERIOD_MS);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     vTaskDelete(NULL);
 }
@@ -165,14 +171,17 @@ void test_smoke_reader_task(void *pvParameters)
             char *data = cJSON_Print(root);
             /* send data via socket */
             int err = send(sock, data, strlen(data), 0);
+            ESP_LOGW(TAG, "Sent data!");
             if (err < 0) 
             {
                 ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                if (errno == 128)
+                esp_restart();
             }
             gpio_set_level(LED_PIN, 1);
-            vTaskDelay(300 / portTICK_PERIOD_MS);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             gpio_set_level(LED_PIN, 0);
-            vTaskDelay(700 / portTICK_PERIOD_MS);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     vTaskDelete(NULL);
 }
@@ -203,7 +212,7 @@ void socket_create_connect(void)
 
     xTaskCreate(socket_receive_task, "sensor_reader", 4096, NULL, 5, NULL);  
     xTaskCreate(test_sensor_reader_task, "sensor_reader", 4096, NULL, 5, NULL);  
-    xTaskCreate(test_smoke_reader_task, "sensor_reader", 4096, NULL, 5, NULL); 
+    // xTaskCreate(test_smoke_reader_task, "sensor_reader", 4096, NULL, 5, NULL); 
 }
 
 static void event_handler(void* arg, esp_event_base_t event_base,
