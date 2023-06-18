@@ -13,6 +13,9 @@ const environment = new Schema ({
     time:{
         type:String
     },
+    status:{
+        type:Number
+    },
     timestamp: { type: Date, default: Date.now }
 })
 const environmentModel = mongoose.model('Environment', environment)

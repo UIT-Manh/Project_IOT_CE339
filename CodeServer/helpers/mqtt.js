@@ -11,7 +11,7 @@ var client = mqtt.connect('mqtt://' + config.mqtt_host + ":" + config.mqttPort, 
 });
 module.exports = function (io) {
     client.on('connect', function () {
-        console.log("Connect mqtt successful!")
+        // console.log("Connect mqtt successful!")
         client.subscribe('status/environments', {qos: 1});
     });
     client.on('message', function (topic, message) {
@@ -50,8 +50,12 @@ module.exports = function (io) {
                 break;
         }
     });
-    exports.sendBuzzerSignal = function () {
+    exports.sendFireSignal = function () {
         client.publish('controller/buzzer', "1", {qos: 1, retain: false});
+
+    }
+    exports.sendNormalSignal = function () {
+        client.publish('controller/buzzer', "0", {qos: 1, retain: false});
     }
     return exports;
 }

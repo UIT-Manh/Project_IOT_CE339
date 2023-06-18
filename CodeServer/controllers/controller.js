@@ -11,7 +11,8 @@ var that = (module.exports = {
           temp : data.temp,
           hum: data.hum,
           smoke: data.smoke,
-          time: data.time
+          time: data.time,
+          status: data.status
       })
       await newEnv.save()
       console.log("Add data environment successfully!")

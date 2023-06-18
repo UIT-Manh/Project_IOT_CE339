@@ -23,9 +23,12 @@ module.exports = function (io, mqtt) {
             catch (err) {
                 console.log("Get data error :" + {err})
             }
-        })
-        socket.on("Buzzer",()=>{
-            mqtt.sendBuzzerSignal();
+        }),
+        socket.on("Signal-fire",()=>{
+            mqtt.sendFireSignal();
+        }),
+        socket.on("Signal-normal",()=>{
+            mqtt.sendNormalSignal();
         })
     })
 }
