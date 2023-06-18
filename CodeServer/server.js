@@ -30,7 +30,9 @@ const route = require('./routes/route')(io);
 
 //Route middleware
 appExpress.use('/', route);
-
+appExpress.get('/', (req, res) => {
+    res.render(__dirname + "./views/main.ejs");
+  });
 // Import mqtt for server
 const mqtt = require('./helpers/mqtt')(io);
 // Import socket io for server
@@ -43,7 +45,7 @@ mongoose
     //InitRole()
     appPort = config.port;
 	appHost = config.host;
-	server.listen(appPort, appHost, () => {
+	server.listen(appPort, () => {
 		console.log(`Server listening at host ${appHost} port ${appPort}`);
     });
 }).catch((err) => {

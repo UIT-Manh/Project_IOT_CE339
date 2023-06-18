@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,14 +14,14 @@
 #include "lwip/sys.h"
 
 #include "i2c_lib.h"
+
 #include "hdc1080.h"
 
 #include "cJSON.h"
 
-
-#define EXAMPLE_ESP_WIFI_SSID      "1111"
-#define EXAMPLE_ESP_WIFI_PASS      "01245678"
-#define EXAMPLE_ESP_MAXIMUM_RETRY  5
+#define ESP_WIFI_SSID      "1111"
+#define ESP_WIFI_PASS      "01245678"
+#define ESP_MAXIMUM_RETRY  5
 
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
@@ -37,7 +38,7 @@
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
-static const char *TAG = "wifi station";
+static const char *TAG = "Node tem-hum";
 
 static int s_retry_num = 0;
 
@@ -69,12 +70,11 @@ void socket_receive_task(void *pvParameters)
             rx_buffer[len] = '\0';
             printf("Received data: %s\n", rx_buffer);
         }
-
         memset(rx_buffer, 0, sizeof(rx_buffer));
     }
     vTaskDelete(NULL);
 }
-void sensor_reader_task(void *pvParameters)
+void temp_hum_sensor_reader_task(void *pvParameters)
 {   
     float temperature;
     float humidity;
@@ -93,34 +93,32 @@ void sensor_reader_task(void *pvParameters)
         hdc1080_set_registers(sensor, registers);
     }
     else
-        printf("Could not initialize HDC1080 sensor\n");
+        ESP_LOGI(TAG, "Could not initialize HDC1080 sensor\n");
 
     while (1)
     {   
 
-        gpio_set_level(LED_PIN, 0);
-        if (gpio_get_level(BUTTON_PIN) == 0)
-        {   
-            /* read sensor and send it to Gateway */
-            if (hdc1080_read(sensor, &temperature, &humidity))
-            {
-                ESP_LOGI(TAG, "Send data sensor: temperature %.2f oC, humidity %.2f.", temperature, humidity);
-                cJSON *root;
-                root = cJSON_CreateObject();
-                cJSON_AddStringToObject(root, "topic", "temp-hum");
-                cJSON_AddNumberToObject(root, "Temperature", temperature);
-                cJSON_AddNumberToObject(root, "Humidity", humidity);
-                char *data = cJSON_Print(root);
-                /* send data via socket */
-                int err = send(sock, data, strlen(data), 0);
-                if (err < 0) {
-                    ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-                    if (errno == 128)
-                    esp_restart();
-                }
+        gpio_set_level(LED_PIN, 0); 
+        /* read sensor and send it to Gateway */
+        if (hdc1080_read(sensor, &temperature, &humidity))
+        {
+            ESP_LOGI(TAG, "Send data sensor: temperature %.2f oC, humidity %.2f.", temperature, humidity);
+            cJSON *root;
+            root = cJSON_CreateObject();
+            cJSON_AddStringToObject(root, "topic", "temp-hum");
+            cJSON_AddNumberToObject(root, "temperature", temperature);
+            cJSON_AddNumberToObject(root, "humidity", humidity);
+            char *data = cJSON_Print(root);
+            /* send data via socket */
+            int err = send(sock, data, strlen(data), 0);
+            if (err < 0) {
+                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                if (errno == 128)
+                esp_restart();
             }
+            ESP_LOGW(TAG, "Sent data!");
             gpio_set_level(LED_PIN, 1);
-            vTaskDelay(500 / portTICK_PERIOD_MS);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
@@ -129,59 +127,6 @@ void sensor_reader_task(void *pvParameters)
         ESP_LOGE(TAG, "Shutting down socket and restarting...");
         shutdown(sock, 0);
         close(sock);
-    }
-    vTaskDelete(NULL);
-}
-void test_sensor_reader_task(void *pvParameters)
-{  
-    while (1)
-    {   
-            cJSON *root;
-            root = cJSON_CreateObject();
-            cJSON_AddStringToObject(root, "topic", "temp-hum");
-            cJSON_AddNumberToObject(root, "temperature", rand() % 100 + 1);
-            cJSON_AddNumberToObject(root, "humidity", rand() % 100 + 1);
-            // cJSON_AddNumberToObject(root, "smoke", rand() % 100 + 1);
-            char *data = cJSON_Print(root);
-            /* send data via socket */
-            int err = send(sock, data, strlen(data), 0);
-            ESP_LOGW(TAG, "Sent data!");
-            if (err < 0) 
-            {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-                if (errno == 128)
-                esp_restart();
-            }
-            gpio_set_level(LED_PIN, 1);
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_PIN, 0);
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
-    vTaskDelete(NULL);
-}
-void test_smoke_reader_task(void *pvParameters)
-{  
-    vTaskDelay(300 / portTICK_PERIOD_MS);
-    while (1)
-    {   
-            cJSON *root;
-            root = cJSON_CreateObject();
-            cJSON_AddStringToObject(root, "topic", "smoke");
-            cJSON_AddNumberToObject(root, "smoke", rand() % 100 + 1);
-            char *data = cJSON_Print(root);
-            /* send data via socket */
-            int err = send(sock, data, strlen(data), 0);
-            ESP_LOGW(TAG, "Sent data!");
-            if (err < 0) 
-            {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-                if (errno == 128)
-                esp_restart();
-            }
-            gpio_set_level(LED_PIN, 1);
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_PIN, 0);
-            vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     vTaskDelete(NULL);
 }
@@ -210,9 +155,8 @@ void socket_create_connect(void)
     }
     ESP_LOGI(TAG, "Successfully connected");
 
-    xTaskCreate(socket_receive_task, "sensor_reader", 4096, NULL, 5, NULL);  
-    xTaskCreate(test_sensor_reader_task, "sensor_reader", 4096, NULL, 5, NULL);  
-    // xTaskCreate(test_smoke_reader_task, "sensor_reader", 4096, NULL, 5, NULL); 
+    xTaskCreate(socket_receive_task, "socket_receive", 4096, NULL, 5, NULL);  
+    xTaskCreate(temp_hum_sensor_reader_task, "temp_hum_sensor_reader", 4096, NULL, 5, NULL);  
 }
 
 static void event_handler(void* arg, esp_event_base_t event_base,
@@ -221,7 +165,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+        if (s_retry_num < ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
             ESP_LOGI(TAG, "retry to connect to the AP");
@@ -237,7 +181,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-void wifi_init_sta(void)
+void wifi_init_start(void)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -264,11 +208,9 @@ void wifi_init_sta(void)
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
-            /* Setting a password implies station will connect to all security modes including WEP/WPA.
-             * However these modes are deprecated and not advisable to be used. Incase your Access point
-             * doesn't support WPA2, these mode can be enabled by commenting below line */
+            .ssid = ESP_WIFI_SSID,
+            .password = ESP_WIFI_PASS,
+
 	     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
 
             .pmf_cfg = {
@@ -283,22 +225,18 @@ void wifi_init_sta(void)
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 
-    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-     * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
             WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
             pdFALSE,
             pdFALSE,
             portMAX_DELAY);
 
-    /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
-     * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 ESP_WIFI_SSID, ESP_WIFI_PASS);
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 ESP_WIFI_SSID, ESP_WIFI_PASS);
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
@@ -321,8 +259,7 @@ void app_main(void)
     /*setup gpio pin */
     gpios_setup();
     /* init wifi */
-    wifi_init_sta();
+    wifi_init_start();
     /* create read sensor task */
     socket_create_connect();
-    
 }

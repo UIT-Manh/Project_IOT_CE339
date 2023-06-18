@@ -41,9 +41,11 @@ module.exports = function (io) {
                 break;
             case 'status/environments':
                 console.log("Environment: " + message.toString());
-                var jsondata = JSON.parse(message.toString());
-                jsondata.time = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
-                addData(jsondata);
+                if (message.toString().length > 10){
+                    var jsondata = JSON.parse(message.toString());
+                    jsondata.time = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+                    addData(jsondata);
+                }
                 io.sockets.emit('Environment-update', message.toString());
                 break;
         }

@@ -20,8 +20,11 @@ $.when(
   const ctx2 = humidityCanvas.getContext('2d');
   const ctx3 = smokeCanvas.getContext('2d');
 
-  
-  socket = io.connect('http://' + Socket_hostIP + ':' + Socket_port, { transports : ['websocket'] });
+  const connectionObject = {
+    withCredentials: true,
+  };
+  const socket = io("", connectionObject);
+  // socket = io.connect('http://' + Socket_hostIP + ':' + Socket_port, { transports : ['websocket'] });
   socket.emit('Get-data');
   socket.on('Environment-update', ()=>{socket.emit('Get-data');})
   socket.on('Send-data', (data)=>{
